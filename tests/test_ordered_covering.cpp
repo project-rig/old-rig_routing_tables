@@ -666,29 +666,16 @@ TEST(OrderedCoveringTest, test_ordered_covering_full)
     {{0b0100, 0xf}, 0x0, 0b110000}
   };
 
+  RoutingTable::Table expected_table = {
+    {{0b0100, 0b1111}, 0x0, 0b110000},
+    {{0b0001, 0b0111}, 0x0, 0b000001},
+    {{0b0000, 0b0011}, 0x0, 0b000110},
+    {{0b0100, 0b0100}, 0x0, 0b010000},
+  };
+
   // Minimise the table as far as possible
   OrderedCovering::minimise(table, 0);
-  ASSERT_EQ(table.size(), 4);
-
-  // [0] = 0100 -> S SW
-  EXPECT_EQ(table[0].keymask.key, 0b0100);
-  EXPECT_EQ(table[0].keymask.mask, 0b1111);
-  EXPECT_EQ(table[0].route, 0b110000);
-
-  // [1] = X001 -> E
-  EXPECT_EQ(table[1].keymask.key, 0b0001);
-  EXPECT_EQ(table[1].keymask.mask, 0b0111);
-  EXPECT_EQ(table[1].route, 0b000001);
-
-  // [2] = XX00 -> N NE
-  EXPECT_EQ(table[2].keymask.key, 0b0000);
-  EXPECT_EQ(table[2].keymask.mask, 0b0011);
-  EXPECT_EQ(table[2].route, 0b000110);
-
-  // [3] = X1XX -> SW
-  EXPECT_EQ(table[3].keymask.key, 0b0100);
-  EXPECT_EQ(table[3].keymask.mask, 0b0100);
-  EXPECT_EQ(table[3].route, 0b010000);
+  ASSERT_EQ(table, expected_table);
 }
 
 
