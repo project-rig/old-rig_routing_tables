@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "routing_table.h"
 
-#ifndef __DEFAULT_ROUTES_H__
+#pragma once
 
 using RoutingTable::Table;
 
@@ -10,7 +10,7 @@ namespace DefaultRoutes
 {
 
 // Determine if an entry may be replaced by default routing.
-bool defaultable(const Table& table, const Table::iterator p_entry)
+bool defaultable(const Table& table, const Table::const_iterator p_entry)
 {
   // An entry may be replaced by default routing iff. packets arrive at the
   // router through 1 link and exit by the opposing link (they go straight
@@ -62,7 +62,7 @@ bool defaultable(const Table& table, const Table::iterator p_entry)
   // If the entry intersects at all with any entry lower in the table then it
   // cannot be replaced by a default route.
   for (auto other_entry = p_entry + 1;
-       other_entry < table.end();
+       other_entry != table.end();
        other_entry++)
   {
     auto other_km = (*other_entry).keymask;
@@ -85,7 +85,7 @@ void minimise(Table& table)
   // Iterate through the table removing any entries which could be managed by
   // default routing.
   auto insert = table.begin();
-  for (auto remove = table.begin(); remove < table.end(); remove++)
+  for (auto remove = table.begin(); remove != table.end(); remove++)
   {
     if (!defaultable(table, remove))
     {
@@ -107,7 +107,3 @@ void minimise(Table& table)
 }
 /*****************************************************************************/
 }
-
-
-#define __DEFAULT_ROUTES_H__
-#endif  // __DEFAULT_ROUTES_H__

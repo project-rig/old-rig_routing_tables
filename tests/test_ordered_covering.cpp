@@ -17,7 +17,7 @@ TEST(OrderedCoveringTest, test_merge_entries)
   table[1] = {{0x1, 0xffffffff}, 2, 2};  // 00000000000000000000000000000001
   table[2] = {{0x3, 0xffffffff}, 4, 1};  // 00000000000000000000000000000011
 
-  auto merge = OrderedCovering::merge_t(table.size(), true);  // Merge all
+  auto merge = OrderedCovering::Merge(table.size(), true);  // Merge all
 
   // Check the merged entry is correct, (000000000000000000000000000000XX)
   RoutingTable::Entry expected = {{0x0, 0xfffffffc}, 0b111, 0b11};
@@ -90,7 +90,7 @@ TEST(OrderedCoveringTest, test_refine_merge_upcheck)
   // The first 4 entries cannot be merged as this would cause the first 3
   // entries become covered. `refine_merge_upcheck` should remove entries from
   // the merge set and return the number of returned entries.
-  auto merge = OrderedCovering::merge_t(table.size(), false);
+  auto merge = OrderedCovering::Merge(table.size(), false);
   merge[0] = merge[1] = merge[2] = merge[3] = merge[4] = true;
 
   auto removed = OrderedCovering::refine_merge_upcheck(table, merge, 0);
@@ -137,7 +137,7 @@ TEST(OrderedCoveringTest, test_refine_merge_downcheck_does_nothing_if_no_covers)
   OrderedCovering::Aliases aliases = OrderedCovering::Aliases();
   aliases[{0b01000, 0b01000}] = {{0b01000, 0b11111}, {0b11111, 0b11111}};
 
-  OrderedCovering::merge_t merge = {true, true, false, false};
+  OrderedCovering::Merge merge = {true, true, false, false};
 
   // Check that the merge is not modified at all and that no entries are
   // reported as being removed.
@@ -168,7 +168,7 @@ TEST(OrderedCoveringTest,
     {{0b1000, 0b1000}, 0b001, 0b100},
   };
   OrderedCovering::Aliases aliases = OrderedCovering::Aliases();
-  OrderedCovering::merge_t merge = {true, true, false};
+  OrderedCovering::Merge merge = {true, true, false};
 
   // Check that the merge is emptied and that all entries are reported to have
   // been removed.
@@ -218,7 +218,7 @@ TEST(OrderedCoveringTest,
     {{0b1000, 0b1000}, 0b001, 0b100},
   };
   OrderedCovering::Aliases aliases = OrderedCovering::Aliases();
-  OrderedCovering::merge_t merge = {true, true, true, false};
+  OrderedCovering::Merge merge = {true, true, true, false};
 
   // Check that the first entry is removed from the merge.
   auto removed = OrderedCovering::refine_merge_downcheck(
@@ -277,7 +277,7 @@ TEST(OrderedCoveringTest, test_refine_merge_downcheck_iterates)
     {{0b10000, 0b10000}, 0b010, 0b001},
   };
   auto aliases = OrderedCovering::Aliases();
-  OrderedCovering::merge_t merge = {true, true, true, true, false, false};
+  OrderedCovering::Merge merge = {true, true, true, true, false, false};
 
   // Should remove all entries from the merge (should require the function to
   // iterate until there are no covers).
@@ -311,7 +311,7 @@ TEST(OrderedCoveringTest, test_merge_apply_at_start_of_table)
     {{0x0, 0x0}, 0b000100, 0b100000},
   };
   auto aliases = OrderedCovering::Aliases();
-  OrderedCovering::merge_t merge = {true, true, false};
+  OrderedCovering::Merge merge = {true, true, false};
 
   // Apply the merge
   OrderedCovering::merge_apply(table, aliases, merge);
@@ -358,7 +358,7 @@ TEST(OrderedCoveringTest, test_merge_apply_at_end_of_table)
     {{0xf, 0xf}, 0b000100, 0b100000},
   };
   auto aliases = OrderedCovering::Aliases();
-  OrderedCovering::merge_t merge = {true, true, false};
+  OrderedCovering::Merge merge = {true, true, false};
 
   // Apply the merge
   OrderedCovering::merge_apply(table, aliases, merge);
@@ -408,7 +408,7 @@ TEST(OrderedCoveringTest, test_merge_apply_mid_table)
     {{0x0, 0x0}, 0b000100, 0b000001},
   };
   auto aliases = OrderedCovering::Aliases();
-  OrderedCovering::merge_t merge = {true, true, false, false};
+  OrderedCovering::Merge merge = {true, true, false, false};
 
   // Apply the merge
   OrderedCovering::merge_apply(table, aliases, merge);
@@ -461,7 +461,7 @@ TEST(OrderedCoveringTest, test_merge_apply_updates_aliases)
     {{0x2, 0xe}, 0b001000, 0b000100},
   };
   auto aliases = OrderedCovering::Aliases();
-  OrderedCovering::merge_t merge = {false, true, true};
+  OrderedCovering::Merge merge = {false, true, true};
 
   // Add to the aliases table
   aliases[{0x0, 0xe}].insert({0x0, 0xf});

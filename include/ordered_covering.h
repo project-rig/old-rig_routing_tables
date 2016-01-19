@@ -15,7 +15,7 @@ namespace OrderedCovering
 typedef std::map<RoutingTable::KeyMask,
                  std::set<RoutingTable::KeyMask>> Aliases;
 
-typedef std::vector<bool> merge_t;  // TODO Own flexible bitvector
+typedef std::vector<bool> Merge;  // TODO Own flexible bitvector
 
 /*****************************************************************************/
 
@@ -28,7 +28,7 @@ void minimise(Table& table, unsigned int target_length, Aliases& aliases);
 /* Core of the Ordered Covering algorithm ************************************/
 
 // Get the best merge (greedy) in a routing table
-merge_t get_best_merge(const Table& table, const Aliases& aliases);
+Merge get_best_merge(const Table& table, const Aliases& aliases);
 
 // Get the position in a table where a new entry of given generality should be
 // inserted.
@@ -42,7 +42,7 @@ Table::const_iterator get_insertion_index(
 );
 Table::const_iterator get_insertion_index(
   const Table& table,
-  const merge_t& merge
+  const Merge& merge
 );
 
 // Refine a merge by pruning any entries which would cause an entry lower in
@@ -50,7 +50,7 @@ Table::const_iterator get_insertion_index(
 int refine_merge_downcheck(
   const Table& table,
   const Aliases& aliases,
-  merge_t& merge,
+  Merge& merge,
   const int min_goodness
 );
 
@@ -58,7 +58,7 @@ int refine_merge_downcheck(
 // entries higher in the table.
 int refine_merge_upcheck(
   const Table& table,
-  merge_t& merge,
+  Merge& merge,
   const int min_goodness
 );
 /*****************************************************************************/
@@ -72,23 +72,23 @@ int refine_merge_upcheck(
 
 // Generate the entry that would be the result of a merge
 RoutingTable::Entry merge_entries(const Table& table,
-                                         const merge_t& merge);
+                                         const Merge& merge);
 
 // Get the number of entries contained within a merge
-int merge_goodness(const merge_t& merge);
+int merge_goodness(const Merge& merge);
 
 // Apply a merge to a routing table
 void merge_apply(Table& table,
                         Aliases& aliases,
-                        const merge_t& merge);
+                        const Merge& merge);
 /*****************************************************************************/
 
 /*****************************************************************************/
 /* Get best merge ************************************************************/
-merge_t get_best_merge(const Table& table, const Aliases& aliases)
+Merge get_best_merge(const Table& table, const Aliases& aliases)
 {
   // Create holders for the current best merge and its goodness
-  auto best_merge = merge_t(table.size(), false);
+  auto best_merge = Merge(table.size(), false);
   int best_goodness = 0;
 
   // Create a bitset to track which routing table entries have been considered
@@ -114,7 +114,7 @@ merge_t get_best_merge(const Table& table, const Aliases& aliases)
 
     // Look through the rest of the table to see which other entries this entry
     // could be merged.
-    auto current_merge = merge_t(table.size(), false);
+    auto current_merge = Merge(table.size(), false);
     current_merge[index] = true;
     int current_goodness = 0;
 
@@ -172,7 +172,7 @@ merge_t get_best_merge(const Table& table, const Aliases& aliases)
 /*****************************************************************************/
 /* Completely empty a merge **************************************************/
 // TODO Reimplement as a method of the bitvector type!
-void merge_clear(merge_t& merge)
+void merge_clear(Merge& merge)
 {
   for (unsigned int i = 0; i < merge.size(); i++)
   {
@@ -184,7 +184,7 @@ void merge_clear(merge_t& merge)
 /*****************************************************************************/
 /* Compute the goodness of a merge *******************************************/
 // TODO Reimplement as a method of the bitvector type
-int merge_goodness(const merge_t& merge)
+int merge_goodness(const Merge& merge)
 {
   // Just count the number of set elements in the merge
   int count = -1;
@@ -202,7 +202,7 @@ int merge_goodness(const merge_t& merge)
 /*****************************************************************************/
 /* Get the entry resulting from a merge **************************************/
 RoutingTable::Entry merge_entries(const Table& table,
-                                         const merge_t& merge)
+                                         const Merge& merge)
 {
   // Iterate through the table, combining the entries.
   uint32_t any_ones = 0x00000000;  // Where there is a one in ANY of the keys
@@ -251,7 +251,7 @@ Table::const_iterator get_insertion_index(
 {
   // Perform a binary search through the table until we find an entry with
   // equivalent generality.
-  auto bottom = table.begin(), top = table.end();
+  auto bottom = table.cbegin(), top = table.cend();
   auto pos = bottom + (top - bottom)/2;
 
   while ((*pos).keymask.count_xs() != generality &&
@@ -292,7 +292,7 @@ Table::const_iterator get_insertion_index(
 // For a given merge
 Table::const_iterator get_insertion_index(
   const Table& table,
-  const merge_t& merge
+  const Merge& merge
 )
 {
   auto new_entry = merge_entries(table, merge);
@@ -304,7 +304,7 @@ Table::const_iterator get_insertion_index(
 /* Apply a merge *************************************************************/
 void merge_apply(Table& table,
                         Aliases& aliases,
-                        const merge_t& merge)
+                        const Merge& merge)
 {
   // Get the merged entry and where to insert it in the table.
   auto merge_entry = merge_entries(table, merge);
@@ -316,7 +316,7 @@ void merge_apply(Table& table,
   // Use two iterators to move through the table, copying elements from one
   // iterator position to the other as required.
   auto insert = table.begin();
-  for (auto remove = table.begin(); remove < table.end(); remove++)
+  for (auto remove = table.cbegin(); remove < table.cend(); remove++)
   {
     // Insert the new entry if this is the correct point at which to do so.
     if (remove == insertion_point)
@@ -376,7 +376,7 @@ void merge_apply(Table& table,
 /*****************************************************************************/
 /* Avoid covering entries with a merge ***************************************/
 
-struct cover_info
+struct CoverInfo
 {
   // If any key-masks lower in the table than the entry resulting from the
   // merge were covered
@@ -416,13 +416,13 @@ void get_settables(RoutingTable::KeyMask& a,
   }
 }
 
-struct cover_info get_cover_info(
+struct CoverInfo get_cover_info(
     const Table& table,
     const Aliases& aliases,
-    const merge_t& merge
+    const Merge& merge
 )
 {
-  struct cover_info info = {false, 0x0, 0x0};
+  struct CoverInfo info = {false, 0x0, 0x0};
 
   // Get the entry which would be generated by the merge
   auto merge_entry = merge_entries(table, merge);
@@ -434,7 +434,7 @@ struct cover_info get_cover_info(
   // the merge would be inserted which would be covered by the entry resulting
   // from performing the merge.
   for (auto i = get_insertion_index(table, merge_entry);
-       i < table.end(); i++)
+       i != table.end(); i++)
   {
     // Get the entry key-mask
     auto entry_km = (*i).keymask;
@@ -472,10 +472,11 @@ struct cover_info get_cover_info(
   return info;
 }
 
+template <typename F>
 std::vector<unsigned int> find_removes(
     const Table& table,
-    const merge_t& merge,
-    std::function<bool(const RoutingTable::KeyMask)> f
+    const Merge& merge,
+    F f
 )
 {
   // If this is a bit we could set to VAL then find all entries which
@@ -498,13 +499,12 @@ std::vector<unsigned int> find_removes(
 int refine_merge_downcheck(
     const Table& table,
     const Aliases& aliases,
-    merge_t& merge,
+    Merge& merge,
     const int min_goodness
 )
 {
-  int
-    removed = 0,                       // Count number of removed entries
-    goodness = merge_goodness(merge);  // Original merge goodness
+  int removed = 0;                       // Count number of removed entries
+  int goodness = merge_goodness(merge);  // Original merge goodness
 
   while (goodness > min_goodness)
   {
@@ -596,7 +596,7 @@ int refine_merge_downcheck(
 // Return the number of pruned entries.
 int refine_merge_upcheck(
     const Table& table,
-    merge_t& merge,
+    Merge& merge,
     const int min_goodness
 )
 {
@@ -612,8 +612,8 @@ int refine_merge_upcheck(
   // the entry to become covered if the merge were to go ahead.
   // Abort this process once the goodness of the merge is no greater than the
   // specified minimum goodness.
-  for (auto entry = table.end() - 1;
-       entry >= table.begin() && goodness > min_goodness;
+  for (auto entry = table.cend() - 1;
+       entry >= table.cbegin() && goodness > min_goodness;
        entry--)
   {
     unsigned int index = entry - table.begin();  // Get the index of the entry
@@ -682,7 +682,7 @@ void minimise(Table& table,
   {
     // Get the best candidate merge; if the merge is empty then the table
     // cannot be further minimised and we should exit the loop.
-    merge_t merge = OrderedCovering::get_best_merge(table, aliases);
+    Merge merge = OrderedCovering::get_best_merge(table, aliases);
     if (OrderedCovering::merge_goodness(merge) < 1)
     {
       break;
