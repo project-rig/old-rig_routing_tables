@@ -9,4 +9,4 @@ add_executable(test_rig_routing_table_tools
 
 target_link_libraries(test_rig_routing_table_tools gtest)
 
-add_custom_target(run_tests valgrind --leak-check=yes ./test_rig_routing_table_tools DEPENDS test_rig_routing_table_tools)
+add_custom_target(run_tests valgrind -q --leak-check=yes ./test_rig_routing_table_tools DEPENDS test_rig_routing_table_tools)
